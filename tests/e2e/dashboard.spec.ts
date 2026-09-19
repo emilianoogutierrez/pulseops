@@ -28,7 +28,7 @@ test("proposal detail preserves commercial scope and can create delivery", async
         if (await accept.count()) {
             await accept.click();
             await expect(page).toHaveURL(/\/projects\//);
-            await expect(page.getByText("Deliverables")).toBeVisible();
+            await expect(page.getByRole("heading", { name: "Deliverables", exact: true })).toBeVisible();
         }
     }
 });
