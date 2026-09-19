@@ -14,7 +14,7 @@ The project was installed and exercised on Windows with Node.js 24 and npm 11 us
 | Prisma client generation | Passed with Prisma 7.10.0 |
 | Strict TypeScript check | Passed |
 | Vitest unit suite | 23 passed |
-| PostgreSQL integration suite during portable run | 4 skipped because no local PostgreSQL service was available |
+| PostgreSQL integration suite | Not executed locally; delegated to PostgreSQL CI |
 | Next.js production build | Passed; 19 application routes generated |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 | `npm audit` | 0 vulnerabilities |

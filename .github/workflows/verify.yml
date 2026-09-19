@@ -49,7 +49,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npx prisma generate
-      - run: npm run db:push -- --skip-generate
+      - run: npm run db:push
       - run: npm run db:seed:demo
       - run: npm run test:integration
 
@@ -81,7 +81,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npx prisma generate
-      - run: npm run db:push -- --skip-generate
+      - run: npm run db:push
       - run: npm run db:seed:demo
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e -- --project=chromium
