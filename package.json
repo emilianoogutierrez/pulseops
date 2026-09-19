@@ -1,0 +1,66 @@
+{
+  "name": "pulseops",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "prisma generate && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "prisma:generate": "prisma generate",
+    "db:seed": "prisma db seed",
+    "verify": "npm run check:public && npm run lint && npm run typecheck && npm run test && npm run build",
+    "check:public": "node scripts/check-public.mjs",
+    "test:integration": "vitest run tests/integration",
+    "db:push": "prisma db push",
+    "db:seed:demo": "cross-env PULSEOPS_DEMO_MODE=true prisma db seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.0.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^3.0.0",
+    "zod": "^4.0.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "dotenv": "^17.2.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^16.0.0",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.4.49",
+    "prisma": "^7.0.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.1",
+    "@types/pg": "^8.15.0",
+    "cross-env": "^10.1.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "type": "module",
+  "overrides": {
+    "deepmerge-ts": "^8.0.1",
+    "mysql2": "^3.23.1"
+  }
+}

@@ -1,0 +1,8 @@
+import clsx from "clsx";
+import type { ReactNode } from "react";
+export function Card({ children, className }: {
+    children: ReactNode;
+    className?: string;
+}) {
+    return <section className={clsx("card", className)}>{children}</section>;
+}

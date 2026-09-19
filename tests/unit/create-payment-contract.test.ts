@@ -1,0 +1,3 @@
+import { describe, expect, it } from "vitest";
+import { createPaymentInput } from "@/server/contracts/create-payment";
+describe("payment request contract", () => { it("accepts operator-owned Mercado Pago links", () => { const x = createPaymentInput.parse({ clientId: "c", method: "MERCADO_PAGO", amount: 4000, currency: "MXN", paymentUrl: "https://link.mercadopago.com.mx/demo" }); expect(x.method).toBe("MERCADO_PAGO"); }); it("rejects malformed URLs", () => { expect(() => createPaymentInput.parse({ clientId: "c", method: "MERCADO_PAGO", amount: 4000, currency: "MXN", paymentUrl: "not-a-url" })).toThrow(); }); });

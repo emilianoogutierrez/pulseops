@@ -1,0 +1,14 @@
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { mxn } from "@/lib/format";
+import { requireSessionIdentity } from "@/server/auth/session";
+import { getAnalytics } from "@/server/repositories/analytics";
+function Bars({ rows }: {
+    rows: {
+        label: string;
+        opportunities: number;
+        pipeline: number;
+        closeRate: number;
+    }[];
+}) { const max = Math.max(...rows.map(r => r.pipeline), 1); return <div className="bar-list">{rows.map(r => <div className="bar-row" key={r.label}><div><strong>{r.label.replaceAll("_", " ")}</strong><span>{r.opportunities} opps · {r.closeRate.toFixed(1)}% close</span></div><div className="bar-track"><span style={{ width: `${Math.max(4, r.pipeline / max * 100)}%` }}/></div><b>{mxn.format(r.pipeline)}</b></div>)}</div>; }
+export default async function AnalyticsPage() { const s = await requireSessionIdentity(); const a = await getAnalytics(s.workspaceId); const maxMethod = Math.max(...a.methods.map(m => m.value), 1); return <><PageHeader eyebrow="Learning loop" title="Analytics" description="Use observed conversion and collection behavior to decide what tomorrow's research should prioritize."/><div className="metric-grid analytics-summary"><div className="metric-card"><span>Collected</span><strong>{mxn.format(a.summary.collected)}</strong><small>Verified paid records</small></div><div className="metric-card"><span>Win rate</span><strong>{a.summary.winRate.toFixed(1)}%</strong><small>Workspace funnel</small></div><div className="metric-card"><span>Repeat rate</span><strong>{a.summary.repeatRate.toFixed(1)}%</strong><small>Clients with repeated value</small></div><div className="metric-card"><span>Average score</span><strong>{a.summary.averageScore.toFixed(0)}</strong><small>Qualification model</small></div></div><div className="analytics-grid analytics-grid--wide"><Card><span className="eyebrow">Acquisition</span><h2>Pipeline by source</h2><Bars rows={a.sources}/></Card><Card><span className="eyebrow">Service mix</span><h2>Where technical demand concentrates</h2><Bars rows={a.services}/></Card></div><div className="analytics-grid"><Card><span className="eyebrow">Collections</span><h2>Revenue by payment rail</h2><div className="payment-mix">{a.methods.map(m => <div key={m.label}><div><strong>{m.label.replaceAll("_", " ")}</strong><b>{mxn.format(m.value)}</b></div><span><i style={{ width: `${m.value / maxMethod * 100}%` }}/></span></div>)}</div></Card><Card><span className="eyebrow">Decision rule</span><h2>Optimize cash per human hour</h2><p className="analytics-copy">PulseOps keeps acquisition quality, payment compatibility, estimated ticket and delivery risk visible together. The operating goal is not more activity; it is higher expected value per unit of human attention.</p><div className="formula">EV = P(win) × net ticket ÷ human hours</div></Card></div></>; }

@@ -1,0 +1,350 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MembershipRole {
+  OWNER
+  OPERATOR
+  VIEWER
+}
+
+enum OpportunityStage {
+  DISCOVERED
+  QUALIFIED
+  CONTACTED
+  REPLIED
+  SCOPING
+  QUOTED
+  WON
+  DELIVERING
+  DELIVERED
+  PAID
+  LOST
+  REJECTED
+}
+
+enum ServiceType {
+  WEB_APP
+  BACKEND
+  AUTOMATION
+  INTEGRATION
+  AI
+  BUG_FIX
+  OTHER
+}
+
+enum MeetingLoad {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProposalStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  BLOCKED
+  REVIEW
+  DELIVERED
+  CLOSED
+}
+
+enum PaymentMethod {
+  SPEI
+  MERCADO_PAGO
+  USDT_BINANCE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DeliverableStatus {
+  PLANNED
+  IN_PROGRESS
+  REVIEW
+  ACCEPTED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  passwordHash String
+  memberships  Membership[]
+  sessions     AuthSession[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Workspace {
+  id                  String                      @id @default(cuid())
+  name                String
+  slug                String                      @unique
+  baseCurrency        String                      @default("MXN")
+  timezone            String                      @default("America/Mexico_City")
+  memberships         Membership[]
+  sessions            AuthSession[]
+  clients             Client[]
+  opportunities       Opportunity[]
+  proposals           Proposal[]
+  projects            Project[]
+  payments            Payment[]
+  deliverables        Deliverable[]
+  settlements         PaymentSettlement[]
+  paymentCapabilities WorkspacePaymentCapability[]
+  activities          ActivityEvent[]
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+}
+
+model Membership {
+  workspaceId String
+  userId      String
+  role        MembershipRole @default(OPERATOR)
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+}
+
+model AuthSession {
+  tokenHash   String    @id
+  userId      String
+  workspaceId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([workspaceId, expiresAt])
+}
+
+model Client {
+  id                     String         @id @default(cuid())
+  workspaceId            String
+  workspace              Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  companyName            String
+  contactName            String
+  email                  String?
+  country                String         @default("MX")
+  currency               String         @default("MXN")
+  preferredPaymentMethod PaymentMethod?
+  acquisitionSource      String?
+  notes                  String?
+  opportunities          Opportunity[]
+  projects               Project[]
+  payments               Payment[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, companyName])
+}
+
+model Opportunity {
+  id                      String           @id @default(cuid())
+  workspaceId             String
+  workspace               Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clientId                String?
+  client                  Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  title                   String
+  description             String?
+  stage                   OpportunityStage @default(DISCOVERED)
+  source                  String
+  serviceType             ServiceType
+  country                 String           @default("MX")
+  currency                String           @default("MXN")
+  estimatedValue          Decimal?         @db.Decimal(14, 2)
+  probability             Int              @default(0)
+  speiCompatible          Boolean          @default(false)
+  mercadoPagoCompatible   Boolean          @default(false)
+  usdtCompatible          Boolean          @default(false)
+  asyncFriendly           Boolean          @default(true)
+  spokenEnglishRequired   Boolean          @default(false)
+  meetingLoad             MeetingLoad      @default(LOW)
+  technicalFit            Int              @default(50)
+  paymentFit              Int              @default(50)
+  urgencyFit              Int              @default(50)
+  asyncFit                Int              @default(50)
+  aiLeverage              Int              @default(50)
+  clientQuality           Int              @default(50)
+  deliveryRisk            Int              @default(50)
+  qualificationScore      Int              @default(0)
+  nextActionAt            DateTime?
+  lastContactAt           DateTime?
+  lostReason              String?
+  version                 Int              @default(1)
+  proposal                Proposal?
+  project                 Project?
+  activities              ActivityEvent[]
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@index([workspaceId, stage, updatedAt])
+  @@index([workspaceId, qualificationScore])
+  @@index([workspaceId, nextActionAt])
+  @@index([workspaceId, source])
+}
+
+model Proposal {
+  id             String         @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  opportunityId  String         @unique
+  opportunity    Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  status         ProposalStatus @default(DRAFT)
+  scope          Json
+  price          Decimal        @db.Decimal(14, 2)
+  currency       String         @default("MXN")
+  deliveryDays   Int
+  revisionLimit  Int            @default(1)
+  sentAt         DateTime?
+  expiresAt      DateTime?
+  acceptedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          Client          @relation(fields: [clientId], references: [id])
+  opportunityId   String          @unique
+  opportunity     Opportunity     @relation(fields: [opportunityId], references: [id])
+  name            String
+  status          ProjectStatus   @default(PLANNED)
+  quotedAmount    Decimal         @db.Decimal(14, 2)
+  collectedAmount Decimal         @default(0) @db.Decimal(14, 2)
+  startedAt       DateTime?
+  dueAt           DateTime?
+  completedAt     DateTime?
+  version         Int             @default(1)
+  payments        Payment[]
+  deliverables    Deliverable[]
+  activities      ActivityEvent[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([workspaceId, status, dueAt])
+  @@index([workspaceId, updatedAt])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  workspaceId       String
+  workspace         Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            Client        @relation(fields: [clientId], references: [id])
+  projectId         String?
+  project           Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  method            PaymentMethod
+  amount            Decimal       @db.Decimal(14, 2)
+  settledAmount     Decimal       @default(0) @db.Decimal(14, 2)
+  currency          String        @default("MXN")
+  status            PaymentStatus @default(PENDING)
+  externalReference String?
+  paymentUrl        String?
+  dueAt             DateTime?
+  paidAt            DateTime?
+  settlements       PaymentSettlement[]
+  activities        ActivityEvent[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([workspaceId, status, paidAt])
+  @@index([workspaceId, createdAt])
+}
+
+model Deliverable {
+  id          String            @id @default(cuid())
+  workspaceId String
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      DeliverableStatus @default(PLANNED)
+  position    Int               @default(0)
+  acceptedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([workspaceId, projectId, position])
+}
+
+model PaymentSettlement {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  paymentId         String
+  payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount            Decimal  @db.Decimal(14, 2)
+  externalReference String?
+  note              String?
+  settledAt         DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@index([workspaceId, paymentId, settledAt])
+}
+
+model WorkspacePaymentCapability {
+  workspaceId        String
+  workspace          Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  method             PaymentMethod
+  enabled            Boolean       @default(true)
+  countryScope       String
+  settlementCurrency String
+  instructions       String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@id([workspaceId, method])
+}
+
+model ActivityEvent {
+  id            String       @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  projectId     String?
+  project       Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  paymentId     String?
+  payment       Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  type          String
+  actor         String?
+  summary       String
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([opportunityId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([paymentId, createdAt])
+}

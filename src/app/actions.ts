@@ -1,0 +1,7 @@
+"use server";
+import { redirect } from "next/navigation";
+import { destroySession } from "@/server/auth/session";
+export async function logoutAction() {
+    await destroySession();
+    redirect("/login");
+}
