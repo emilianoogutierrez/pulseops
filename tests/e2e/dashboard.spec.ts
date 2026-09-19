@@ -36,8 +36,8 @@ test("global command search supports keyboard selection", async ({ page }) => {
     await signIn(page);
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
     await expect(page.getByRole("dialog", { name: "Search PulseOps" })).toBeVisible();
-    await page.getByLabel("Search PulseOps").press("ArrowDown");
-    await page.getByLabel("Search PulseOps").press("Escape");
+    await page.getByRole("textbox", { name: "Search PulseOps" }).press("ArrowDown");
+    await page.getByRole("textbox", { name: "Search PulseOps" }).press("Escape");
     await expect(page.getByRole("dialog", { name: "Search PulseOps" })).toHaveCount(0);
 });
 test("pipeline exposes operator filters and create entry point", async ({ page }) => {
